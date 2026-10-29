@@ -1,0 +1,4 @@
+# Finales de línea: LF en todo, CRLF en los lanzadores de Windows
+* text=auto eol=lf
+*.bat text eol=crlf
+*.woff2 binary

@@ -1,0 +1,10 @@
+.env
+*.db
+__pycache__
+.pytest_cache
+.venv
+tests
+CODIGO_CONFIGURACION.txt
+datos_entrenamiento
+copias
+prueba_carga_*.txt

@@ -1,0 +1,57 @@
+# Opción para servidores con Docker: Mostrador + motor de IA (Ollama) + PostgreSQL.
+#
+#   cp .env.example .env                              (y cambia SECRET_KEY y POSTGRES_PASSWORD)
+#   docker compose up -d --build
+#   docker compose exec app python -m scripts.preparar_ia   (crea la IA propia «mostrador»)
+#   docker compose logs app                           (ahí aparece el código de configuración inicial)
+#
+# Con tarjeta gráfica NVIDIA, quita los comentarios de "deploy" en el servicio ollama.
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mostrador
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cambia-esto}
+      POSTGRES_DB: mostrador
+    volumes:
+      - datos:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mostrador"]
+      interval: 5s
+      retries: 10
+
+  ollama:
+    image: ollama/ollama
+    restart: unless-stopped
+    environment:
+      OLLAMA_NUM_PARALLEL: "4"
+      OLLAMA_KEEP_ALIVE: "30m"
+    volumes:
+      - modelos:/root/.ollama
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://mostrador:${POSTGRES_PASSWORD:-cambia-esto}@db:5432/mostrador
+      OLLAMA_URL: http://ollama:11434
+    depends_on:
+      db:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    ports:
+      - "8000:8000"
+
+volumes:
+  datos:
+  modelos:

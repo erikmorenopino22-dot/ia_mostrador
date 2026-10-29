@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mostrador: simulador de atención en farmacia</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💊</text></svg>">
+<link href="fuentes/fuentes.css" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF4F1; --card:#FFFFFF; --ink:#12302B; --muted:#4F655F; --line:#CFDDD7;
+  --amber:#8F530B; --amber-soft:#FBEBD3; --ok:#1D6B45; --ok-soft:#DDF1E6; --warn:#8A5A00; --warn-soft:#FFF1CC; --bad:#A1302A; --bad-soft:#F9E0DE;
+  --me:#1F4A42; --me-ink:#FFFFFF; --focus:#C77A12;
+  --font:"Atkinson Hyperlegible", "Segoe UI", Arial, sans-serif;
+  --lh:1.55;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0E1917; --card:#15231F; --ink:#E3EEEA; --muted:#A3B8B1; --line:#2B3E38;
+    --amber:#EDB062; --amber-soft:#3A2A14; --ok:#7FD3A6; --ok-soft:#173327; --warn:#F2C766; --warn-soft:#352B12; --bad:#F29C95; --bad-soft:#3A1C1A;
+    --me:#2E6B5F; --me-ink:#FFFFFF; --focus:#EDB062; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0E1917; --card:#15231F; --ink:#E3EEEA; --muted:#A3B8B1; --line:#2B3E38;
+  --amber:#EDB062; --amber-soft:#3A2A14; --ok:#7FD3A6; --ok-soft:#173327; --warn:#F2C766; --warn-soft:#352B12; --bad:#F29C95; --bad-soft:#3A1C1A;
+  --me:#2E6B5F; --me-ink:#FFFFFF; --focus:#EDB062; color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px); font-size:100%}
+html[data-size="grande"]{font-size:118%}
+html[data-size="muy"]{font-size:136%}
+html[data-font="lexend"]{--font:"Lexend","Segoe UI",Arial,sans-serif}
+html[data-espacio="si"]{--lh:1.9; letter-spacing:.02em; word-spacing:.08em}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);line-height:var(--lh);font-size:1rem}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.wrap{max-width:60rem;margin:0 auto;padding:0 1rem 3rem}
+
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;padding:1.4rem 0 1rem;border-bottom:2px solid var(--ink);flex-wrap:wrap}
+.brand h1{margin:0;font-size:2rem;line-height:1.1;letter-spacing:-.01em}
+.brand h1 .cruz{display:inline-block;width:.8em;height:.8em;margin-right:.3em;vertical-align:-.05em;background:
+  linear-gradient(var(--ok),var(--ok)) center/34% 100% no-repeat,
+  linear-gradient(var(--ok),var(--ok)) center/100% 34% no-repeat}
+.brand p{margin:.2rem 0 0;color:var(--muted)}
+.btn{border:2px solid var(--ink);background:var(--card);border-radius:.6rem;padding:.5rem .9rem;cursor:pointer;font-weight:700;line-height:1.2;min-height:2.6rem}
+.btn:hover{background:var(--paper)}
+.btn.primary{background:var(--ink);color:var(--paper)}
+.btn.primary:hover{opacity:.92}
+.btn.amber{border-color:var(--amber);color:var(--amber)}
+.btn.quiet{border-color:var(--line)}
+.btn.small{padding:.3rem .6rem;min-height:2.1rem;font-size:.9rem}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+#ajustes{background:var(--card);border:2px solid var(--line);border-radius:.8rem;padding:1rem;margin-top:1rem;display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr))}
+#ajustes[hidden]{display:none}
+fieldset{border:0;margin:0;padding:0}
+legend{font-weight:700;margin-bottom:.35rem}
+.seg{display:flex;flex-wrap:wrap;gap:.35rem}
+.seg label{display:flex;align-items:center;gap:.35rem;border:2px solid var(--line);border-radius:.5rem;padding:.3rem .6rem;cursor:pointer}
+.seg input{accent-color:var(--ink)}
+.check{display:flex;gap:.5rem;align-items:flex-start;cursor:pointer}
+.check input{width:1.2rem;height:1.2rem;margin-top:.2rem;accent-color:var(--ink)}
+
+nav.tabs{display:flex;gap:.3rem;margin:1.2rem 0 1rem;flex-wrap:wrap}
+nav.tabs button{border:0;background:none;padding:.5rem .8rem;border-radius:.5rem;cursor:pointer;font-weight:700;color:var(--muted)}
+nav.tabs button[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+nav.tabs .sep{width:2px;background:var(--line);margin:.3rem .4rem}
+nav.tabs .profe{color:var(--amber)}
+
+.aviso{border-left:5px solid var(--warn);background:var(--warn-soft);padding:.7rem 1rem;border-radius:.4rem;margin:.8rem 0}
+.aviso.error{border-color:var(--bad);background:var(--bad-soft)}
+.vacio{border:2px dashed var(--line);border-radius:.8rem;padding:2rem 1rem;text-align:center;color:var(--muted)}
+
+.casos{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(17rem,1fr))}
+.caso{background:var(--card);border:2px solid var(--line);border-radius:.8rem;padding:1rem;display:flex;flex-direction:column;gap:.5rem}
+.caso h3{margin:0;font-size:1.15rem;line-height:1.3}
+.modulo{font-size:.85rem;color:var(--amber);font-weight:700}
+.caso p{margin:0;color:var(--muted);flex:1}
+
+/* Chat */
+.escena{background:var(--card);border:2px solid var(--line);border-radius:.8rem;overflow:hidden}
+.escena-cab{padding:1rem;border-bottom:2px solid var(--line);display:flex;gap:1rem;justify-content:space-between;flex-wrap:wrap;align-items:flex-start}
+.escena-cab h2{margin:0;font-size:1.25rem}
+.escena-cab p{margin:.2rem 0 0;color:var(--muted);max-width:40rem}
+.escena-cab .acciones{display:flex;gap:.5rem;flex-wrap:wrap}
+details.rubrica-alumno{padding:.6rem 1rem;border-bottom:2px solid var(--line);background:var(--paper)}
+details.rubrica-alumno summary{cursor:pointer;font-weight:700}
+details.rubrica-alumno ul{margin:.4rem 0 0;padding-left:1.2rem}
+.log{padding:1rem;display:flex;flex-direction:column;gap:.8rem;min-height:18rem;max-height:62vh;overflow-y:auto}
+.msg{max-width:min(36rem,88%);padding:.7rem .9rem;border-radius:1rem;white-space:pre-wrap;word-wrap:break-word}
+.msg .quien{display:block;font-size:.8rem;font-weight:700;margin-bottom:.15rem;opacity:.85}
+.msg.cliente{align-self:flex-start;background:var(--paper);border:2px solid var(--line);border-bottom-left-radius:.3rem}
+.msg.alumno{align-self:flex-end;background:var(--me);color:var(--me-ink);border-bottom-right-radius:.3rem}
+.msg.pista{align-self:center;background:var(--amber-soft);border:2px dashed var(--amber);max-width:34rem}
+.msg .oir{margin-top:.4rem}
+.pensando{color:var(--muted);font-style:italic}
+.entrada{display:flex;gap:.5rem;padding:.8rem;border-top:2px solid var(--line);align-items:flex-end;flex-wrap:wrap}
+.entrada textarea{flex:1 1 16rem;min-height:3rem;max-height:10rem;resize:vertical;border:2px solid var(--line);border-radius:.6rem;padding:.6rem;background:var(--paper);line-height:var(--lh)}
+.entrada .botones{display:flex;gap:.4rem;flex-wrap:wrap}
+.estado-linea{padding:0 1rem .6rem;color:var(--muted);font-size:.9rem;min-height:1.2rem}
+
+/* Valoración */
+.valoracion{padding:1rem;border-top:2px solid var(--line);background:var(--paper)}
+.valoracion h3{margin:0 0 .5rem}
+.crit{display:grid;grid-template-columns:1fr auto;gap:.2rem 1rem;padding:.6rem 0;border-bottom:1px solid var(--line)}
+.crit:last-child{border-bottom:0}
+.crit .txt{font-weight:700}
+.crit .ev{grid-column:1/-1;color:var(--muted);font-size:.95rem}
+.nivel{font-size:.85rem;font-weight:700;padding:.1rem .5rem;border-radius:1rem;white-space:nowrap}
+.nivel.logrado{background:var(--ok-soft);color:var(--ok)}
+.nivel.parcial{background:var(--warn-soft);color:var(--warn)}
+.nivel.no_logrado{background:var(--bad-soft);color:var(--bad)}
+.total{font-size:1.4rem;font-weight:700;margin:.6rem 0}
+.nota-ia{font-size:.9rem;color:var(--muted);border-left:4px solid var(--amber);padding-left:.6rem;margin:.6rem 0}
+.caja{background:var(--card);border:2px solid var(--line);border-radius:.8rem;padding:1rem;margin-top:.8rem}
+.caja.profe{border-color:var(--ok)}
+
+/* Listas */
+table{border-collapse:collapse;width:100%;background:var(--card)}
+.tabla{overflow-x:auto;border:2px solid var(--line);border-radius:.8rem}
+th,td{text-align:left;padding:.6rem .7rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.9rem;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+.estado{font-size:.85rem;font-weight:700;padding:.1rem .5rem;border-radius:1rem;white-space:nowrap}
+.estado.en_curso{background:var(--paper);color:var(--muted);border:1px solid var(--line)}
+.estado.entregada{background:var(--warn-soft);color:var(--warn)}
+.estado.revisada{background:var(--ok-soft);color:var(--ok)}
+.fila-filtros{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.8rem}
+.fila-filtros select{border:2px solid var(--line);border-radius:.5rem;padding:.35rem .5rem;background:var(--card)}
+
+/* Editor */
+.form{display:grid;gap:1rem}
+.campo label{display:block;font-weight:700;margin-bottom:.25rem}
+.campo .ayuda{display:block;font-weight:400;color:var(--muted);font-size:.9rem}
+.campo input[type=text],.campo input[type=email],.campo input[type=password],.campo textarea,.num{width:100%;border:2px solid var(--line);border-radius:.5rem;padding:.5rem;background:var(--card);line-height:var(--lh)}
+.campo textarea{min-height:5rem;resize:vertical}
+.rub-fila{display:grid;grid-template-columns:1fr 5.5rem auto;gap:.5rem;align-items:center;margin-bottom:.5rem}
+.rub-fila input[type=text]{border:2px solid var(--line);border-radius:.5rem;padding:.45rem;background:var(--card)}
+.num{width:5.5rem}
+.fila-acciones{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+.gradeo{display:grid;grid-template-columns:1fr auto;gap:.3rem 1rem;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--line)}
+.gradeo .ev{grid-column:1/-1;font-size:.9rem;color:var(--muted)}
+.gradeo .max{color:var(--muted);font-size:.9rem;margin-left:.3rem}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+h2.seccion{font-size:1.4rem;margin:.5rem 0 .8rem}
+@media (max-width:560px){ .brand h1{font-size:1.6rem} .rub-fila{grid-template-columns:1fr 4.5rem auto} }
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+.login{max-width:28rem;margin:2rem auto}
+.login .caja{display:grid;gap:1rem}
+.usuario{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;color:var(--muted)}
+.codigo{font-size:1.5rem;font-weight:700;letter-spacing:.15em;color:var(--ink)}
+.grupos{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(17rem,1fr))}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1><span class="cruz" aria-hidden="true"></span>Mostrador</h1>
+      <p>Practica la atención al cliente en la oficina de farmacia</p>
+    </div>
+    <div class="usuario">
+      <span id="quien"></span>
+      <button class="btn quiet small" id="btnSalir" hidden>Cerrar sesión</button>
+      <button class="btn quiet" id="btnAjustes" aria-expanded="false" aria-controls="ajustes">Aa  Ajustes de lectura</button>
+    </div>
+  </header>
+
+  <section id="ajustes" hidden aria-label="Ajustes de lectura y accesibilidad">
+    <fieldset><legend>Tamaño de letra</legend><div class="seg">
+      <label><input type="radio" name="size" value="normal"> Normal</label>
+      <label><input type="radio" name="size" value="grande"> Grande</label>
+      <label><input type="radio" name="size" value="muy"> Muy grande</label></div></fieldset>
+    <fieldset><legend>Tipo de letra</legend><div class="seg">
+      <label><input type="radio" name="font" value="atk"> Alta legibilidad</label>
+      <label><input type="radio" name="font" value="lexend"> Lectura fácil</label></div></fieldset>
+    <fieldset><legend>Idioma del cliente</legend><div class="seg">
+      <label><input type="radio" name="idioma" value="es"> Castellano</label>
+      <label><input type="radio" name="idioma" value="va"> Valencià</label></div></fieldset>
+    <fieldset><legend>Lectura</legend>
+      <label class="check"><input type="checkbox" id="optEspacio"> Más espacio entre líneas y letras</label>
+      <label class="check" id="lblVoz"><input type="checkbox" id="optVoz"> Leer en voz alta lo que dice el cliente</label></fieldset>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="Secciones" id="tabs" hidden></nav>
+  <div id="avisoGlobal" role="status" aria-live="polite"></div>
+  <main id="vista" tabindex="-1"></main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

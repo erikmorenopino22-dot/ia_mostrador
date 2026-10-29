@@ -1,0 +1,15 @@
+.env
+*.db
+__pycache__/
+.pytest_cache/
+.venv/
+CODIGO_CONFIGURACION.txt
+datos_entrenamiento/
+copias/
+prueba_carga_*.txt
+
+# Programas portátiles y datos locales: no se suben al repositorio
+python/
+ollama/
+modelos/
+*.parcial
